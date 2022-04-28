@@ -1,4 +1,4 @@
-module github.com/udzura/imagearch
+module github.com/udzura/archof
 
 go 1.17
 
