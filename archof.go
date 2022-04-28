@@ -13,7 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
-const VERSION = "0.1.0"
+const VERSION = "0.1.1"
 
 func usage(err error) {
 	fmt.Println(err.Error())
