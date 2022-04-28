@@ -53,6 +53,28 @@ func parseFlags(image *string, token *string) error {
 		*image = fs.Arg(0)
 	}
 
+	if *token == "" {
+		for _, env := range os.Environ() {
+			if strings.HasPrefix(env, "ARCHOF_BEARER=") {
+				tok := strings.SplitAfterN(env, "=", 2)[1]
+				*token = tok
+				break
+			}
+
+			if strings.HasPrefix(env, "ARCHOF_TOKEN=") {
+				tok := strings.SplitN(env, "=", 2)[1]
+				*token = tok
+				break
+			}
+
+			// Support GHCR but overridden by ARCHOF_*
+			if strings.HasPrefix(env, "GITHUB_TOKEN=") {
+				tok := strings.SplitN(env, "=", 2)[1]
+				*token = tok
+			}
+		}
+	}
+
 	if *image == "" {
 		return fmt.Errorf("Invalid arguments")
 	}
