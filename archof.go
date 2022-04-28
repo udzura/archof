@@ -4,24 +4,79 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 )
 
+const VERSION = "0.1.0"
+
+func usage(err error) {
+	fmt.Println(err.Error())
+
+	format := `
+usage:
+    %s [container.reg.example/org/image:tag] [OPTIONS]
+
+flags:
+    --bearer <token> A http bearer auth token to pass to registory
+
+version:
+    v%s
+`
+	fmt.Printf(format, os.Args[0], VERSION)
+	os.Exit(1)
+}
+
+func parseFlags(image *string, token *string) error {
+	if len(os.Args) < 2 {
+		return fmt.Errorf("Arguments too short")
+	}
+	var args []string
+	if !strings.HasPrefix(os.Args[1], "-") {
+		*image = os.Args[1]
+		args = os.Args[2:]
+	} else {
+		args = os.Args[1:]
+	}
+
+	fs := flag.NewFlagSet("Flags", flag.ContinueOnError)
+	fs.StringVar(token, "bearer", "", "")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		*image = fs.Arg(0)
+	}
+
+	if *image == "" {
+		return fmt.Errorf("Invalid arguments")
+	}
+	return nil
+}
+
 func main() {
+	target := ""
 	token := ""
-	flag.StringVar(&token, "bearer", "", "")
-	flag.Parse()
-	target := flag.Arg(0)
+	if err := parseFlags(&target, &token); err != nil {
+		usage(err)
+	}
 
 	ref, err := name.ParseReference(target)
 	if err != nil {
 		panic(err)
 	}
 
-	img, err := remote.Image(ref, remote.WithAuth(&authn.Bearer{Token: token}))
+	var img v1.Image
+	if token == "" {
+		img, err = remote.Image(ref)
+	} else {
+		img, err = remote.Image(ref, remote.WithAuth(&authn.Bearer{Token: token}))
+	}
 	if err != nil {
 		panic(err)
 	}
