@@ -88,7 +88,12 @@ func main() {
 	}
 	sha := manifest.Config.Digest.String()
 
-	desc, err := remote.Get(ref, remote.WithAuth(&authn.Bearer{Token: token}))
+	var desc *remote.Descriptor
+	if token == "" {
+		desc, err = remote.Get(ref)
+	} else {
+		desc, err = remote.Get(ref, remote.WithAuth(&authn.Bearer{Token: token}))
+	}
 	if err != nil {
 		panic(err)
 	}
